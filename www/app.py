@@ -40,9 +40,9 @@ def init_jinja2(app, **kw):
 	app['__templating__'] = env
 
 async def logger_factory(app, handler):
-	async def lgger(request):
+	async def logger(request):
 		logging.info('Request: %s %s' % (request.method, request.path))
-		@await asyncio.sleep(0.3)
+		#await asyncio.sleep(0.3)
 		return (await handler(request))
 	return logger
 
@@ -51,7 +51,7 @@ async def data_factory(app, handler):
 		if request.method == 'POST':
 			if request.content_type.startswith('application/json'):
 				request.__data__ = await request.json()
-				logging.info('request json： %s' str(request.__data__))
+				logging.info('request json： %s' % str(request.__data__))
 			elif request.content_type.startswith('application/x-www-urlencoded'):
 				request.__data__ = await request.post()
 				logging.info('request form: %s' % str(request.__data__))
@@ -81,13 +81,14 @@ async def response_factory(app, handler):
 				resp.content_type = 'application/json;charset=utf-8'
 				return resp
 			else:
-				resp = web.Response(body=app['__templating__'].get_template(template).remder(**r).encode('utf-8'))
+				resp = web.Response(body=app['__templating__'].get_template(template).render(**r).encode('utf-8'))
 				resp.content_type = 'text/html;charset=utf-8'
 				return resp
 		if isinstance(r, int) and r >=100 and r < 600:
 			return web.Response(r)
 		if isinstance(r, tuple) and len(r) == 2:
-			t, m = requestif isinstance(t, int) and t >= 100 and t < 600:
+			t, m = r 
+			if isinstance(t, int) and t >= 100 and t < 600:
 				return web.Response(t, str(m))
 		#default:
 		resp = web.Response(body=str(r).encode('utf-8'))
@@ -100,7 +101,7 @@ def datetime_filter(t):
 	if delta < 60:
 		return u'1分钟前'
 	if delta < 3600:
-		return u '%s分钟前' % (delta // 60)
+		return u'%s分钟前' % (delta // 60)
 	if delta < 86400:
 		return u'%s小时前' % (delta // 3600)
 	if delta < 604800:
@@ -114,7 +115,7 @@ async def init(loop):
 		logger_factory, response_factory
 	])
 	init_jinja2(app, filters=dict(datetime=datetime_filter))
-	add_routers(app, 'handlers')
+	add_routes(app, 'handlers')
 	add_static(app)
 	srv = await loop.create_server(app.make_handler(), '127.0.0.1', 9000)
 	logging.info('server started at http://127.0.0.1:9000...')
