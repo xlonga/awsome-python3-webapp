@@ -5,7 +5,7 @@ __author__ = 'xlonga Huang'
 
 'url handlers'
 
-import re,time, json, logging, hashlib, base64, asyncio
+import re, time, json, logging, hashlib, base64, asyncio
 
 import markdown2
 
@@ -151,7 +151,7 @@ def manage_create_blog():
 	return {
 		'__template__': 'manage_blog_edit.html',
 		'id': '',
-		'action': 'api/blogs'
+		'action': '/api/blogs'
 	}
 
 _RE_EMAIL = re.compile(r'^[a-z0-9\.\-\_]+\@[a-z0-9\-\_]+(\.[a-z0-9\-\_]+){1,4}$')
