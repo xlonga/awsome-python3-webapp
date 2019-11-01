@@ -124,14 +124,14 @@ class ModelMetaclass(type):
 			raise Exception('Primary key not found.')
 		for k in mappings.keys():
 			attrs.pop(k)
-		escaped.fields = list(map(lambda f: '`%s`' % f, fields))
+		escaped_fields = list(map(lambda f: '`%s`' % f, fields))
 		attrs['__mappings__'] = mappings #保存属性和列的映射关系
 		attrs['__table__'] = tableName
 		attrs['__primary_key__'] = primaryKey #主键属性名
 		attrs['__fields__'] = fields #除逐渐外的属性名
 		attrs['__select__'] = 'select `%s`, %s from `%s`' % (primaryKey, ', '.join(escaped_fields), tableName)
 		attrs['__insert__'] = 'insert into `%s` (%s, `%s`) values (%s)' % (tableName, ', '.join(escaped_fields), primaryKey, create_args_string(len(escaped_fields) + 1))
-		attrs['__insert__'] = 'update `%s` set %s where `%s` =?' % (tableName, ', '.join(map(lambda f: '`%s`=?' % (mappings.get(f).name or f), fields)), primaryKey)
+		attrs['__update__'] = 'update `%s` set %s where `%s` =?' % (tableName, ', '.join(map(lambda f: '`%s`=?' % (mappings.get(f).name or f), fields)), primaryKey)
 		attrs['__delete__'] = 'delete from `%s` where `%s`=?' % (tableName, primaryKey)
 		return type.__new__(cls, name, bases, attrs)
 
@@ -228,5 +228,6 @@ class Model(dict, metaclass=ModelMetaclass):
 		rows = await execute(self.__delete__, args)
 		if rows != 1:
 			logging.warn('failed to remove by primary key: affected rows: %s' % rows)
+
 
 
