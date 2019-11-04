@@ -5,7 +5,7 @@
 __author__ = 'xlonga Huang'
 
 '''
-JSON API definition
+JSON API definition 定义每个页面显示数据条数
 '''
 
 import json, logging, inspect, functools
@@ -41,10 +41,11 @@ class Page(object):
 		>> p3.limit
 		10
 		'''
-		self.item_count = item_count
-		self.page_size = page_size
-		self.page_count = item_count // page_size + (1 if item_count % page_size > 0 else 0)
+		self.item_count = item_count   #number of entries
+		self.page_size = page_size     #number of itmes per page
+		self.page_count = item_count // page_size + (1 if item_count % page_size > 0 else 0)  #pagination
 		if (item_count == 0) or (page_index > self.page_count):
+			#no data
 			self.offset = 0
 			self.limit = 0
 			self.page_index = 1

@@ -39,7 +39,7 @@ def user2cookie(user, max_age):
 	'''
 	Generate cookies str by user.
 	'''
-	#build cppkie string by: id-expires-sha1
+	#build cookie string by: id-expires-sha1
 	expires = str(int(time.time() + max_age))
 	s = '%s-%s-%s-%s' % (user.id, user.passwd, expires, _COOKIE_KEY)
 	L = [user.id, expires,hashlib.sha1(s.encode('utf-8')).hexdigest()]
@@ -49,7 +49,6 @@ def text2html(text):
 	lines = map(lambda s: '<p>%s</p>' % s.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;'), filter(lambda s: s.strip() != '', text.split('\n')))
 	return ''.join(lines)
 
-@asyncio.coroutine
 async def cookie2user(cookie_str):
 	'''
 	Parsw cookie and load user if cookie is vaild.

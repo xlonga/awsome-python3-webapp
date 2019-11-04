@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+#ORM Object Relational Mapping
 
 
 __author__ = 'xlonga Huang'
@@ -12,6 +13,7 @@ def log(sql, args=()):
     logging.info('SQL: %s' % sql)
 
 async def create_pool(loop, **kw):
+	#连接池函数，用于数据库的链接
 	logging.info('create database connection pool...')
 	global __pool
 	__pool = await aiomysql.create_pool(
@@ -28,6 +30,7 @@ async def create_pool(loop, **kw):
 	)
 
 async def select(sql, args, size=None):
+	#查询数据库数据函数
 	log(sql, args)
 	global __pool
 	async with __pool.get() as conn:
@@ -41,6 +44,7 @@ async def select(sql, args, size=None):
 		return rs
 
 async def execute(sql,args, autocommit=True):
+	#执行数据库insert/update/delete操作函数
 	log(sql)
 	async with __pool.get() as conn:
 		if not autocommit:
@@ -64,7 +68,7 @@ def create_args_string(num):
 		return ', '.join(L)
 
 class Field(object):
-
+	#这是一个字段类，类包含字段名、字段类型、主键、默认值
 	def __init__(self, name, column_type, primary_key, default):
 		self.name = name
 		self.column_type = column_type
@@ -100,7 +104,7 @@ class TextField(Field):
 		super().__init__(name, 'text', False, default)
 
 class ModelMetaclass(type):
-
+	#定义一个元类
 	def __new__(cls, name, bases, attrs):
 		if name=='Model':
 			return type.__new__(cls, name, bases, attrs)
@@ -108,7 +112,7 @@ class ModelMetaclass(type):
 		logging.info('found model: %s (table: %s)' % (name, tableName))
 		mappings = dict()
 		fields = []
-		primaryKey = None
+		primaryKey = None   #主键字段
 		for k, v in attrs.items():
 			if isinstance(v, Field):
 				logging.info('  found mapping: %s ==> %s' % (k, v))
@@ -119,16 +123,17 @@ class ModelMetaclass(type):
 						raise Exception('Duplicate primary key for field: %s' % k)
 					primaryKey = k
 				else:
-					fields.append(k)
+					fields.append(k)  #添加主键以外的字段
 		if not primaryKey:
 			raise Exception('Primary key not found.')
 		for k in mappings.keys():
-			attrs.pop(k)
-		escaped_fields = list(map(lambda f: '`%s`' % f, fields))
+			attrs.pop(k)  #剔除在映射中的字段
+		escaped_fields = list(map(lambda f: '`%s`' % f, fields)) #将非主键字段变为 `field`
 		attrs['__mappings__'] = mappings #保存属性和列的映射关系
 		attrs['__table__'] = tableName
 		attrs['__primary_key__'] = primaryKey #主键属性名
-		attrs['__fields__'] = fields #除逐渐外的属性名
+		attrs['__fields__'] = fields #除主键外的属性名
+		# 构造默认的SELECT, INSERT, UPDATE和DELETE语句:
 		attrs['__select__'] = 'select `%s`, %s from `%s`' % (primaryKey, ', '.join(escaped_fields), tableName)
 		attrs['__insert__'] = 'insert into `%s` (%s, `%s`) values (%s)' % (tableName, ', '.join(escaped_fields), primaryKey, create_args_string(len(escaped_fields) + 1))
 		attrs['__update__'] = 'update `%s` set %s where `%s` =?' % (tableName, ', '.join(map(lambda f: '`%s`=?' % (mappings.get(f).name or f), fields)), primaryKey)
@@ -153,6 +158,7 @@ class Model(dict, metaclass=ModelMetaclass):
 		return getattr(self, key, None)
 
 	def getValueOrDefault(self, key):
+		#获取键值或取默认值
 		value = getattr(self, key, None)
 		if value is None:
 			field = self.__mappings__[key]
